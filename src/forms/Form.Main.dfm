@@ -3,7 +3,7 @@ object AppForm: TAppForm
   Top = 0
   Caption = ' Form Validaton - Created by DCE-Systems'
   ClientHeight = 342
-  ClientWidth = 557
+  ClientWidth = 638
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -30,7 +30,6 @@ object AppForm: TAppForm
     Padding.Top = 5
     Padding.Right = 5
     TabOrder = 0
-    ExplicitLeft = 10
     object LabelEmail: TLabel
       AlignWithMargins = True
       Left = 10
@@ -40,8 +39,6 @@ object AppForm: TAppForm
       Margins.Bottom = 0
       Align = alTop
       Caption = 'Email'
-      ExplicitLeft = 64
-      ExplicitTop = 181
       ExplicitWidth = 24
     end
     object LabelFirstname: TLabel
@@ -96,9 +93,6 @@ object AppForm: TAppForm
       Height = 21
       Align = alTop
       TabOrder = 2
-      ExplicitLeft = 64
-      ExplicitTop = 200
-      ExplicitWidth = 201
     end
     object EditFirstname: TEdit
       AlignWithMargins = True
@@ -110,7 +104,6 @@ object AppForm: TAppForm
       ParentShowHint = False
       ShowHint = False
       TabOrder = 0
-      ExplicitLeft = 12
     end
     object EditLastname: TEdit
       AlignWithMargins = True
@@ -120,9 +113,6 @@ object AppForm: TAppForm
       Height = 21
       Align = alTop
       TabOrder = 1
-      ExplicitLeft = 32
-      ExplicitTop = 128
-      ExplicitWidth = 201
     end
     object EditPassword: TEdit
       AlignWithMargins = True
@@ -143,7 +133,6 @@ object AppForm: TAppForm
       Align = alTop
       PasswordChar = '*'
       TabOrder = 4
-      ExplicitLeft = 12
     end
   end
   object GroupBox2: TGroupBox
@@ -154,13 +143,12 @@ object AppForm: TAppForm
     Align = alLeft
     Caption = 'Commands'
     TabOrder = 1
-    ExplicitLeft = 297
-    ExplicitTop = 85
-    ExplicitHeight = 217
+    ExplicitLeft = 226
+    ExplicitTop = 8
     object Bevel1: TBevel
       AlignWithMargins = True
       Left = 5
-      Top = 114
+      Top = 66
       Width = 118
       Height = 26
       Align = alTop
@@ -169,55 +157,58 @@ object AppForm: TAppForm
       ExplicitTop = 139
       ExplicitWidth = 124
     end
-    object btnSimpleValidation: TButton
+    object btnUserValidation: TButton
       AlignWithMargins = True
       Left = 5
       Top = 18
       Width = 118
       Height = 42
       Align = alTop
-      Caption = 'Simple validation'
+      Caption = 'User Validation'
       TabOrder = 0
-      OnClick = btnSimpleValidationClick
-    end
-    object btnAnnotationValidation: TButton
-      AlignWithMargins = True
-      Left = 5
-      Top = 66
-      Width = 118
-      Height = 42
-      Align = alTop
-      Caption = 'Annotation Validation'
-      TabOrder = 1
-      OnClick = btnAnnotationValidationClick
-      ExplicitLeft = 7
+      OnClick = btnUserValidationClick
+      ExplicitTop = 66
     end
     object btnPopulateForm: TButton
       AlignWithMargins = True
       Left = 5
-      Top = 146
+      Top = 98
       Width = 118
       Height = 42
       Align = alTop
       Caption = 'Populate Form'
-      TabOrder = 2
+      TabOrder = 1
       OnClick = btnPopulateFormClick
-      ExplicitLeft = 32
-      ExplicitTop = 192
-      ExplicitWidth = 75
+      ExplicitLeft = 7
+    end
+    object chkHidePassword: TCheckBox
+      AlignWithMargins = True
+      Left = 5
+      Top = 146
+      Width = 118
+      Height = 17
+      Align = alTop
+      Caption = 'Hide Password'
+      Checked = True
+      State = cbChecked
+      TabOrder = 2
+      OnClick = chkHidePasswordClick
+      ExplicitLeft = 16
+      ExplicitTop = 160
+      ExplicitWidth = 97
     end
   end
   object MemoValidation: TMemo
     AlignWithMargins = True
     Left = 354
     Top = 8
-    Width = 191
+    Width = 276
     Height = 326
-    Align = alLeft
+    Align = alClient
     Lines.Strings = (
       'MemoValidation')
     ScrollBars = ssVertical
     TabOrder = 2
-    ExplicitHeight = 266
+    ExplicitWidth = 191
   end
 end

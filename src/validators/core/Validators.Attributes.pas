@@ -1,6 +1,5 @@
-//Created by: bit Time Professionals [https://github.com/bittimeprofessionals]
-
 unit Validators.Attributes;
+// created by Daniele Spinetti: [https://github.com/bittimeprofessionals]
 
 interface
 

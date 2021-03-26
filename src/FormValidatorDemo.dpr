@@ -3,9 +3,10 @@ program FormValidatorDemo;
 uses
   Vcl.Forms,
   Form.Main in 'forms\Form.Main.pas' {AppForm},
-  Model.Person in 'model\Model.Person.pas',
-  Validators.Attributes in 'engine\Validators.Attributes.pas',
-  Validators.Engine in 'engine\Validators.Engine.pas';
+  Model.User in 'model\Model.User.pas',
+  Validators.Attributes in 'validators\core\Validators.Attributes.pas',
+  Validators.Engine.DCESystems in 'validators\Validators.Engine.DCESystems.pas',
+  Validators.Engine in 'validators\core\Validators.Engine.pas';
 
 {$R *.res}
 
