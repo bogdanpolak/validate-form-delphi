@@ -30,7 +30,6 @@ object AppForm: TAppForm
     Padding.Top = 5
     Padding.Right = 5
     TabOrder = 0
-    ExplicitLeft = 10
     object LabelEmail: TLabel
       AlignWithMargins = True
       Left = 10
@@ -40,8 +39,6 @@ object AppForm: TAppForm
       Margins.Bottom = 0
       Align = alTop
       Caption = 'Email'
-      ExplicitLeft = 64
-      ExplicitTop = 181
       ExplicitWidth = 24
     end
     object LabelFirstname: TLabel
@@ -96,9 +93,6 @@ object AppForm: TAppForm
       Height = 21
       Align = alTop
       TabOrder = 2
-      ExplicitLeft = 64
-      ExplicitTop = 200
-      ExplicitWidth = 201
     end
     object EditFirstname: TEdit
       AlignWithMargins = True
@@ -110,7 +104,6 @@ object AppForm: TAppForm
       ParentShowHint = False
       ShowHint = False
       TabOrder = 0
-      ExplicitLeft = 12
     end
     object EditLastname: TEdit
       AlignWithMargins = True
@@ -120,9 +113,6 @@ object AppForm: TAppForm
       Height = 21
       Align = alTop
       TabOrder = 1
-      ExplicitLeft = 32
-      ExplicitTop = 128
-      ExplicitWidth = 201
     end
     object EditPassword: TEdit
       AlignWithMargins = True
@@ -143,7 +133,6 @@ object AppForm: TAppForm
       Align = alTop
       PasswordChar = '*'
       TabOrder = 4
-      ExplicitLeft = 12
     end
   end
   object GroupBox2: TGroupBox
@@ -154,13 +143,10 @@ object AppForm: TAppForm
     Align = alLeft
     Caption = 'Commands'
     TabOrder = 1
-    ExplicitLeft = 297
-    ExplicitTop = 85
-    ExplicitHeight = 217
     object Bevel1: TBevel
       AlignWithMargins = True
       Left = 5
-      Top = 114
+      Top = 66
       Width = 118
       Height = 26
       Align = alTop
@@ -169,42 +155,29 @@ object AppForm: TAppForm
       ExplicitTop = 139
       ExplicitWidth = 124
     end
-    object btnSimpleValidation: TButton
+    object btnUserValidation: TButton
       AlignWithMargins = True
       Left = 5
       Top = 18
       Width = 118
       Height = 42
       Align = alTop
-      Caption = 'Simple validation'
+      Caption = 'User Validation'
       TabOrder = 0
-      OnClick = btnSimpleValidationClick
-    end
-    object btnAnnotationValidation: TButton
-      AlignWithMargins = True
-      Left = 5
-      Top = 66
-      Width = 118
-      Height = 42
-      Align = alTop
-      Caption = 'Annotation Validation'
-      TabOrder = 1
-      OnClick = btnAnnotationValidationClick
-      ExplicitLeft = 7
+      OnClick = btnUserValidationClick
+      ExplicitTop = 66
     end
     object btnPopulateForm: TButton
       AlignWithMargins = True
       Left = 5
-      Top = 146
+      Top = 98
       Width = 118
       Height = 42
       Align = alTop
       Caption = 'Populate Form'
-      TabOrder = 2
+      TabOrder = 1
       OnClick = btnPopulateFormClick
-      ExplicitLeft = 32
-      ExplicitTop = 192
-      ExplicitWidth = 75
+      ExplicitTop = 146
     end
   end
   object MemoValidation: TMemo
@@ -218,6 +191,5 @@ object AppForm: TAppForm
       'MemoValidation')
     ScrollBars = ssVertical
     TabOrder = 2
-    ExplicitHeight = 266
   end
 end

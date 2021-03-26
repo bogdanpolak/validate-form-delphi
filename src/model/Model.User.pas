@@ -8,7 +8,7 @@ uses
   Validators.Engine;
 
 type
-  TPerson = class
+  TUser = class
   private
     FEmail: string;
     FLastname: string;
@@ -36,14 +36,9 @@ type
     property Pwd: string read FPwd write SetPwd;
   end;
 
-  TPersonValidator = class(TInterfacedObject, IValidator<TPerson>)
-  public
-    function Validate(aEntity: TPerson): IValidationResult;
-  end;
-
 implementation
 
-constructor TPerson.Create(aFirstname, aLastname, aEmail, aPwd: string);
+constructor TUser.Create(aFirstname, aLastname, aEmail, aPwd: string);
 begin
   inherited Create;
   FFirstname := aFirstname;
@@ -52,51 +47,29 @@ begin
   FPwd := aPwd;
 end;
 
-procedure TPerson.SetAddress(const Value: string);
+procedure TUser.SetAddress(const Value: string);
 begin
   FAddress := Value;
 end;
 
-procedure TPerson.SetEmail(const Value: string);
+procedure TUser.SetEmail(const Value: string);
 begin
   FEmail := Value;
 end;
 
-procedure TPerson.SetFirstname(const Value: string);
+procedure TUser.SetFirstname(const Value: string);
 begin
   FFirstname := Value;
 end;
 
-procedure TPerson.SetLastname(const Value: string);
+procedure TUser.SetLastname(const Value: string);
 begin
   FLastname := Value;
 end;
 
-procedure TPerson.SetPwd(const Value: string);
+procedure TUser.SetPwd(const Value: string);
 begin
   FPwd := Value;
-end;
-
-{ TPersonLoginValidator<TPerson> }
-
-function TPersonValidator.Validate(aEntity: TPerson): IValid1ationResult;
-var
-  lIsValid: boolean;
-begin
-  Result := TValidationResult.Create;
-
-  if aEntity.Firstname.IsEmpty then
-    Result.AddBrokenField('Firstname', ['Firstname is mandatory.']);
-  if aEntity.Lastname.IsEmpty then
-    Result.AddBrokenField('Lastname', ['Lastname is mandatory.']);
-  if aEntity.Email.IsEmpty then
-    Result.AddBrokenField('Email', ['Email is mandatory.']);
-  if aEntity.Pwd.IsEmpty then
-    Result.AddBrokenField('Pwd', ['Pwd is mandatory.']);
-
-  lIsValid := not (aEntity.Firstname.IsEmpty or aEntity.Lastname.IsEmpty or aEntity.Email.IsEmpty);
-  if not lIsValid then
-    Result.BrokenRules := ['The fields Firstname, Lastname and Email are mandatory.'];
 end;
 
 end.

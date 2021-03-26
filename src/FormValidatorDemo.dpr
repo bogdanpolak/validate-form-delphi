@@ -5,7 +5,9 @@ uses
   Form.Main in 'forms\Form.Main.pas' {AppForm},
   Model.User in 'model\Model.User.pas',
   Validators.Attributes in 'validators\core\Validators.Attributes.pas',
-  Validators.Engine.DCESystems in 'validators\Validators.Engine.DCESystems.pas';
+  Validators.Engine.DCESystems in 'validators\Validators.Engine.DCESystems.pas',
+  Validators.Engine in 'validators\core\Validators.Engine.pas',
+  Model.User.Validator in 'model\Model.User.Validator.pas';
 
 {$R *.res}
 

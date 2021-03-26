@@ -10,7 +10,7 @@ uses
   System.Generics.Collections,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   {-}
-  Model.Person;
+  Model.User;
 
 type
   TAppForm = class(TForm)
@@ -24,18 +24,16 @@ type
     LabelPwd: TLabel;
     GroupBox1: TGroupBox;
     GroupBox2: TGroupBox;
-    btnSimpleValidation: TButton;
-    btnAnnotationValidation: TButton;
+    btnUserValidation: TButton;
     Bevel1: TBevel;
     btnPopulateForm: TButton;
     Label1: TLabel;
     EditRetypePassword: TEdit;
     MemoValidation: TMemo;
-    procedure btnSimpleValidationClick(Sender: TObject);
-    procedure btnAnnotationValidationClick(Sender: TObject);
+    procedure btnUserValidationClick(Sender: TObject);
     procedure btnPopulateFormClick(Sender: TObject);
   private
-    class function BuildPerson(const appForm: TAppForm): TPerson; static;
+    class function BuildUser(const appForm: TAppForm): TUser; static;
     { Private declarations }
   public
     { Public declarations }
@@ -53,25 +51,24 @@ uses
 
 {$R *.dfm}
 
-class function TAppForm.BuildPerson(const appForm: TAppForm): TPerson;
+class function TAppForm.BuildUser(const appForm: TAppForm): TUser;
 begin
-  Result := TPerson.Create(
+  Result := TUser.Create(
     appForm.EditFirstname.Text,
     appForm.EditLastname.Text,
     appForm.EditEmail.Text,
     appForm.EditPassword.Text);
 end;
 
-function AddBullets(const aLines: string): string;
+function AddBullets(const aLines: array of string): string;
 var
   sl: TStringList;
   idx: Integer;
 begin
   sl := TStringList.Create();
   try
-    sl.Text := aLines;
-    for idx := 0 to sl.Count-1 do
-      sl[idx] := ' * '+sl[idx];
+    for idx := 0 to High(aLines) do
+      sl.Add(' * '+aLines[idx]);
     Result := sl.Text;
   finally
     sl.Free;
@@ -87,48 +84,24 @@ begin
   EditRetypePassword.Text := 'john123';
 end;
 
-procedure TAppForm.btnSimpleValidationClick(Sender: TObject);
+procedure TAppForm.btnUserValidationClick(Sender: TObject);
 var
-  Person: TPerson;
-  PersonValidator: IValidator<TPerson>;
-  ValidationResult: IValidationResult;
-  Rule: string;
+  lUser: TUser;
+  lValidationResult: IValidationResult;
 begin
-  Person := BuildPerson(self);
+  lUser := BuildUser(self);
   try
-    PersonValidator := TPersonValidator.Create;
-    ValidationResult := PersonValidator.Validate(Person);
-    ValidationResult.Bind('Firstname', EditFirstname);
-    ValidationResult.Bind('Lastname', EditLastname);
-    ValidationResult.Bind('Email', EditEmail);
-    ValidationResult.Bind('Password', EditPassword);
-    ValidationResult.ValidationColor := clYellow;
-    if not ValidationResult.IsValid then
-      for Rule in ValidationResult.BrokenRules do
-        ShowMessage(Rule);
-  finally
-    Person.Free;
-  end;
-end;
-
-procedure TAppForm.btnAnnotationValidationClick(Sender: TObject);
-var
-  Person: TPerson;
-  ValidationResult: IValidationResult;
-begin
-  Person := BuildPerson(self);
-  try
-    ValidationResult := TValidationEngine.PropertyValidation(Person, 'AttributesValidation');
-    ValidationResult.Bind('Firstname', EditFirstname);
-    ValidationResult.Bind('Lastname', EditLastname);
-    ValidationResult.Bind('Email', EditEmail);
-    ValidationResult.Bind('Pwd', EditPassword);
-    if not ValidationResult.IsValid then
-      MemoValidation.Lines.Text := AddBullets(ValidationResult.BrokenRulesText)
+    lValidationResult := TValidationEngine.PropertyValidation(lUser, 'AttributesValidation');
+    // lValidationResult.Bind('Firstname', EditFirstname);
+    // lValidationResult.Bind('Lastname', EditLastname);
+    // lValidationResult.Bind('Email', EditEmail);
+    // lValidationResult.Bind('Pwd', EditPassword);
+    if not lValidationResult.IsValid then
+      MemoValidation.Lines.Text := AddBullets(lValidationResult.BrokenRules)
     else
       MemoValidation.Lines.Text :=  '';
   finally
-    Person.Free;
+    lUser.Free;
   end;
 end;
 
