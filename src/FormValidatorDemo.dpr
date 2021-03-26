@@ -6,8 +6,7 @@ uses
   Model.User in 'model\Model.User.pas',
   Validators.Attributes in 'validators\core\Validators.Attributes.pas',
   Validators.Engine.DCESystems in 'validators\Validators.Engine.DCESystems.pas',
-  Validators.Engine in 'validators\core\Validators.Engine.pas',
-  Model.User.Validator in 'model\Model.User.Validator.pas';
+  Validators.Engine in 'validators\core\Validators.Engine.pas';
 
 {$R *.res}
 

@@ -3,7 +3,7 @@ object AppForm: TAppForm
   Top = 0
   Caption = ' Form Validaton - Created by DCE-Systems'
   ClientHeight = 342
-  ClientWidth = 557
+  ClientWidth = 638
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -143,6 +143,8 @@ object AppForm: TAppForm
     Align = alLeft
     Caption = 'Commands'
     TabOrder = 1
+    ExplicitLeft = 226
+    ExplicitTop = 8
     object Bevel1: TBevel
       AlignWithMargins = True
       Left = 5
@@ -177,19 +179,36 @@ object AppForm: TAppForm
       Caption = 'Populate Form'
       TabOrder = 1
       OnClick = btnPopulateFormClick
-      ExplicitTop = 146
+      ExplicitLeft = 7
+    end
+    object chkHidePassword: TCheckBox
+      AlignWithMargins = True
+      Left = 5
+      Top = 146
+      Width = 118
+      Height = 17
+      Align = alTop
+      Caption = 'Hide Password'
+      Checked = True
+      State = cbChecked
+      TabOrder = 2
+      OnClick = chkHidePasswordClick
+      ExplicitLeft = 16
+      ExplicitTop = 160
+      ExplicitWidth = 97
     end
   end
   object MemoValidation: TMemo
     AlignWithMargins = True
     Left = 354
     Top = 8
-    Width = 191
+    Width = 276
     Height = 326
-    Align = alLeft
+    Align = alClient
     Lines.Strings = (
       'MemoValidation')
     ScrollBars = ssVertical
     TabOrder = 2
+    ExplicitWidth = 191
   end
 end

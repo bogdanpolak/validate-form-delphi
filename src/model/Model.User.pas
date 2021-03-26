@@ -22,16 +22,17 @@ type
     procedure SetPwd(const Value: string);
   public
     constructor Create(aFirstname, aLastname, aEmail: string; aPwd: string = ''); overload;
-    [RequiredValidation('AttributesValidation', 'Firstname is required')]
-    [MaxLengthValidation('AttributesValidation', 'Firstname is too long', 8)]
-    [MinLengthValidation('AttributesValidation', 'Firstname is too short', 4)]
+    [RequiredValidation('AttributesValidation', 'First name is required')]
+    [MinLengthValidation('AttributesValidation', 'First name too short (min. 4 chars)', 4)]
+    [MaxLengthValidation('AttributesValidation', 'First name too long (max. 8 chars)', 8)]
     property Firstname: string read FFirstname write SetFirstname;
-    [RequiredValidation('AttributesValidation', 'Firstname is required')]
+    [RequiredValidation('AttributesValidation', 'Last name is required')]
     property Lastname: string read FLastname write SetLastname;
-    [RequiredValidation('AttributesValidation', 'Firstname is required')]
+    [RequiredValidation('AttributesValidation', 'Email is required')]
     [EmailValidation('AttributesValidation', 'Email wrong')]
     property Email: string read FEmail write SetEmail;
     property Address: string read FAddress write SetAddress;
+    [MinLengthValidation('AttributesValidation', 'Passwods too short (min. 8 chars)', 8)]
     [RegexValidation('AttributesValidation', 'Password not valid', '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}')]
     property Pwd: string read FPwd write SetPwd;
   end;

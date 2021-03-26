@@ -6,7 +6,10 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages,
-  System.SysUtils, System.Variants, System.Classes,
+  System.SysUtils,
+  System.StrUtils,
+  System.Variants,
+  System.Classes,
   System.Generics.Collections,
   Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
   {-}
@@ -30,13 +33,13 @@ type
     Label1: TLabel;
     EditRetypePassword: TEdit;
     MemoValidation: TMemo;
+    chkHidePassword: TCheckBox;
     procedure btnUserValidationClick(Sender: TObject);
     procedure btnPopulateFormClick(Sender: TObject);
+    procedure chkHidePasswordClick(Sender: TObject);
   private
     class function BuildUser(const appForm: TAppForm): TUser; static;
-    { Private declarations }
   public
-    { Public declarations }
   end;
 
 var
@@ -60,6 +63,15 @@ begin
     appForm.EditPassword.Text);
 end;
 
+procedure TAppForm.chkHidePasswordClick(Sender: TObject);
+var
+  ch: char;
+begin
+  ch := IFThen(chkHidePassword.Checked,'*',#0)[1];
+  EditPassword.PasswordChar := ch;
+  EditRetypePassword.PasswordChar := ch;
+end;
+
 function AddBullets(const aLines: array of string): string;
 var
   sl: TStringList;
@@ -81,7 +93,7 @@ begin
   EditLastname.Text := 'Kowalski';
   EditEmail.Text := 'john.kowalski@example.com';
   EditPassword.Text := 'john123';
-  EditRetypePassword.Text := 'john123';
+  EditRetypePassword.Text := 'John*123';
 end;
 
 procedure TAppForm.btnUserValidationClick(Sender: TObject);
@@ -92,10 +104,6 @@ begin
   lUser := BuildUser(self);
   try
     lValidationResult := TValidationEngine.PropertyValidation(lUser, 'AttributesValidation');
-    // lValidationResult.Bind('Firstname', EditFirstname);
-    // lValidationResult.Bind('Lastname', EditLastname);
-    // lValidationResult.Bind('Email', EditEmail);
-    // lValidationResult.Bind('Pwd', EditPassword);
     if not lValidationResult.IsValid then
       MemoValidation.Lines.Text := AddBullets(lValidationResult.BrokenRules)
     else
