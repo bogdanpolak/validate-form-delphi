@@ -1,4 +1,4 @@
-unit Model.Person;
+unit Model.User;
 
 interface
 
@@ -79,7 +79,7 @@ end;
 
 { TPersonLoginValidator<TPerson> }
 
-function TPersonValidator.Validate(aEntity: TPerson): IValidationResult;
+function TPersonValidator.Validate(aEntity: TPerson): IValid1ationResult;
 var
   lIsValid: boolean;
 begin
