@@ -4,221 +4,227 @@ unit Validators.Engine;
 interface
 
 uses
-  System.RTTI, System.JSON, System.Generics.Collections;
+  System.RTTI,
+  System.JSON,
+  System.StrUtils,
+  System.Generics.Collections;
 
 type
+  TWarningKind = (wkRequired, wkMaxLength, wkMinLength, wkRegexMatch, wkEmail);
 
-  TBrokenRules = array of string;
+  TWarningKindHelper = record helper for TWarningKind
+    function ToString(): string;
+  end;
 
-  TBrokenRulesHelper = record helper for TBrokenRules
+  TWarning = record
   private
-    function asJsonArray: TJSONArray;
-  end;
-
-  IValidationResult = interface
-    ['{14B7A1EF-DCD0-416C-BAF1-CF25A6F6E202}']
-    function GetBrokenRules: TBrokenRules;
-    procedure SetBrokenRules(aBrokenRules: TBrokenRules);
-    procedure AddBrokenRules(aBrokenRules: TBrokenRules);
-    property BrokenRules: TBrokenRules read GetBrokenRules write SetBrokenRules;
-    function IsValid(const aRaiseExceptionIfNot: boolean = false): boolean;
-  end;
-
-  TValidationResult = class(TInterfacedObject, IValidationResult)
-  protected
-    FBrokenRules: TBrokenRules;
+    FKind: TWarningKind;
+    FSource: string;
   public
-    function GetBrokenRules: TBrokenRules;
-    procedure SetBrokenRules(aBrokenRules: TBrokenRules);
-    procedure AddBrokenRules(aBrokenRules: TBrokenRules);
-    property BrokenRules: TBrokenRules read GetBrokenRules write SetBrokenRules;
-    function IsValid(const aRaiseExceptionIfNot: boolean = false): boolean;
+    property Kind: TWarningKind read FKind write FKind;
+    property Source: string read FSource write FSource;
+    constructor Create(aKind: TWarningKind; const aSource: string);
   end;
 
-  IValidator<T> = interface
-    ['{A81A5167-68BB-49D3-B2F8-BC0557FA240C}']
-    function Validate(aEntity: T): IValidationResult;
+  IWarnings = interface
+    ['{720F1371-1C21-458C-ADDB-68F0DD95CD7C}']
+    function ToArray: TArray<TWarning>;
+    function ToJSON: string;
+    procedure Clear;
+    procedure Add(const aWarning: TWarning); overload;
+    procedure Add(const aWarnings: TArray<TWarning>); overload;
+    function HasAny: boolean;
   end;
 
-  IValidatable<T> = interface
-    ['{01643E54-2058-4C42-BD98-462EA78E1CAB}']
-    function Validate(aValidator: IValidator<T>;
-      out aBrokenRules: TBrokenRules): boolean;
-  end;
-
-  IValidatorContainer = interface
-    ['{DCC0B831-822B-4159-B132-10587E8BFDFB}']
-    procedure RegisterValidatorFor(aType: TClass; aContext: string);
-    function GetValidatorFor(aType: TClass; aContext: string)
-      : IValidator<TClass>;
-  end;
-
-  TBaseValidatorContainer = class(TObject)
+  TWarnings = class(TInterfacedObject, IWarnings)
+  strict private
+    FWarnings: TList<TWarning>;
   private
-    FRegistry: TDictionary<TClass, TDictionary<string, IInterface>>;
+    function IsAllValid(const aRaiseExceptionIfNot: boolean): boolean;
   public
-    constructor Create;
+    class function New: IWarnings; static;
+    constructor Create();
     destructor Destroy; override;
-    procedure RegisterValidatorFor<T: class>(aContext: string;
-      aValidator: IValidator<T>);
-    function GetValidatorFor<T: class>(aContext: string): IValidator<T>;
+    function ToArray: TArray<TWarning>;
+    function ToJSON: string;
+    procedure Clear;
+    procedure Add(const aWarning: TWarning); overload;
+    procedure Add(const aWarnings: TArray<TWarning>); overload;
+    function HasAny: boolean;
   end;
 
   TValidationEngine = class(TObject)
   private
     class var FRTTIContext: TRttiContext;
-    class var FValidationContainer: TBaseValidatorContainer;
+    class procedure DoEntityValidation<T>(aObject: T; aContext: string;
+      oWarnings: IWarnings);
+    class procedure DoPropertyValidation(aObject: TObject; aContext: string;
+      aWarnings: IWarnings);
   public
     class constructor Create;
     class destructor Destroy;
-    class function Validate<T: class>(aObject: T; aContext: string)
-      : IValidationResult;
-    class function PropertyValidation(aObject: TObject; aContext: string)
-      : IValidationResult;
-    class function EntityValidation<T: class>(aObject: T; aContext: string)
-      : IValidationResult;
-    class property ValidationContainer: TBaseValidatorContainer
-      read FValidationContainer;
+    class function Validate<T: class>(aObject: T; aContext: string): IWarnings;
   end;
 
 implementation
 
 uses
-  Validators.Attributes, System.SysUtils;
+  Validators.Attributes,
+  System.SysUtils;
 
-{ TBrokenRulesHelper }
-
-function TBrokenRulesHelper.asJsonArray: TJSONArray;
-var
-  I: Integer;
-begin
-  Result := TJSONArray.Create;
-  for I := Low(self) to High(self) do
-    Result.Add(self[I]);
-end;
-
-{ TRunTimeValidator }
+{ TValidationEngine }
 
 class constructor TValidationEngine.Create;
 begin
   FRTTIContext := TRttiContext.Create;
-  FValidationContainer := TBaseValidatorContainer.Create;
 end;
 
 class destructor TValidationEngine.Destroy;
 begin
   FRTTIContext.Free;
-  FValidationContainer.Free;
 end;
 
-class function TValidationEngine.EntityValidation<T>(aObject: T;
-  aContext: string): IValidationResult;
-var
-  a: TCustomAttribute;
-  lValidator: IValidator<T>;
+class procedure TValidationEngine.DoEntityValidation<T>(aObject: T;
+  aContext: string; oWarnings: IWarnings);
 begin
-  Result := TValidationResult.Create;
-  lValidator := FValidationContainer.GetValidatorFor<T>(aContext);
-  Result.AddBrokenRules(lValidator.Validate(aObject).BrokenRules);
+  {
+    var
+    a: TCustomAttribute;
+    lValidator: IValidator<T>;
+    Result := TValidationResult.Create;
+    lValidator := FValidationContainer.GetValidatorFor<T>(aContext);
+    Result.AddWarning(lValidator.Validate(aObject).BrokenRules);
+  }
 end;
 
-class function TValidationEngine.PropertyValidation(aObject: TObject;
-  aContext: string): IValidationResult;
+class procedure TValidationEngine.DoPropertyValidation(aObject: TObject;
+  aContext: string; aWarnings: IWarnings);
 var
   rt: TRttiType;
   a: TCustomAttribute;
   p: TRttiProperty;
   m: TRttiMethod;
+  lWarning: TWarning;
+  lValue: string;
+  lSource: string;
+  lResult: TValue;
+  isValid: Boolean;
+  lKindValue: TValue;
 begin
-  Result := TValidationResult.Create;
   rt := FRTTIContext.GetType(aObject.ClassType);
   for p in rt.GetProperties do
     for a in p.GetAttributes do
     begin
-      if not(a is ValidationAttribute) then
+      if not(a is RuleBaseAttribute) then
         continue;
-      if ValidationAttribute(a).Context <> aContext then
+      if RuleBaseAttribute(a).Context <> aContext then
         continue;
-      m := FRTTIContext.GetType(a.ClassType).GetMethod('Validate');
+      m := FRTTIContext.GetType(a.ClassType).GetMethod('TryValidate');
       if m = nil then
         continue;
-      Result.AddBrokenRules(m.Invoke(a, [p.GetValue(aObject).AsString])
-        .AsType<IValidationResult>.BrokenRules);
+      lValue := p.GetValue(aObject).AsString;
+      lSource := Format('%s.%s', [aObject.ClassName, p.Name]);
+      lKindValue := TValue.From(lWarning);
+      isValid := m.Invoke(a, [lValue, lSource, lKindValue]).AsType<boolean>();
+      if not isValid then
+      begin
+        lWarning := lKindValue.AsType<TWarning>;
+        aWarnings.Add(lWarning);
+      end;
     end;
 end;
 
 class function TValidationEngine.Validate<T>(aObject: T; aContext: string)
-  : IValidationResult;
-var
-  rt: TRttiType;
-  cx: TRttiContext;
-  a: TCustomAttribute;
-  p: TRttiProperty;
-  m: TRttiMethod;
-  lValidator: IValidator<T>;
+  : IWarnings;
 begin
-  Result := TValidationResult.Create;
-  Result.AddBrokenRules(EntityValidation<T>(aObject, aContext).BrokenRules);
-  Result.AddBrokenRules(PropertyValidation(aObject, aContext).BrokenRules);
+  Result := TWarnings.New;
+  DoEntityValidation<T>(aObject, aContext, Result);
+  DoPropertyValidation(aObject, aContext, Result);
 end;
 
-{ TBaseValidatorContainer }
+{ TWarning }
 
-constructor TBaseValidatorContainer.Create;
+constructor TWarning.Create(aKind: TWarningKind; const aSource: string);
 begin
-  FRegistry := TDictionary < TClass, TDictionary < string, IInterface >>.Create;
+  Kind := aKind;
+  Source := aSource;
 end;
 
-destructor TBaseValidatorContainer.Destroy;
-var
-  lVal: TDictionary<string, IInterface>;
+{ TWarnings }
+
+procedure TWarnings.Add(const aWarning: TWarning);
 begin
-  for lVal in FRegistry.Values do
-    lVal.Free;
-  FRegistry.Free;
+  FWarnings.Add(aWarning);
+end;
+
+procedure TWarnings.Add(const aWarnings: TArray<TWarning>);
+begin
+  FWarnings.AddRange(aWarnings);
+end;
+
+function TWarnings.IsAllValid(const aRaiseExceptionIfNot: boolean): boolean;
+begin
+  Result := FWarnings.Count <= 0;
+  if (not Result) and (aRaiseExceptionIfNot) then
+    raise Exception.Create(ToJSON);
+end;
+
+procedure TWarnings.Clear;
+begin
+  FWarnings.Clear;
+end;
+
+constructor TWarnings.Create;
+begin
+  FWarnings := TList<TWarning>.Create();
+end;
+
+destructor TWarnings.Destroy;
+begin
+  FWarnings.Free;
   inherited;
 end;
 
-function TBaseValidatorContainer.GetValidatorFor<T>(aContext: string)
-  : IValidator<T>;
+function TWarnings.HasAny: boolean;
 begin
-  Result := FRegistry[T][aContext] as IValidator<T>;
+  Result := FWarnings.Count > 0;
 end;
 
-procedure TBaseValidatorContainer.RegisterValidatorFor<T>(aContext: string;
-  aValidator: IValidator<T>);
+class function TWarnings.New: IWarnings;
+begin
+  Result := TWarnings.Create;
+end;
+
+function TWarnings.ToArray: TArray<TWarning>;
+begin
+  Result := FWarnings.ToArray;
+end;
+
+function TWarnings.ToJSON: string;
 var
-  lDictionary: TDictionary<string, IInterface>;
+  sb: TStringBuilder;
+  lWarning: TWarning;
+  idx: Integer;
+  sep: string;
 begin
-  if not FRegistry.TryGetValue(T, lDictionary) then
-    lDictionary := TDictionary<string, IInterface>.Create();
-  lDictionary.AddOrSetValue(aContext, aValidator);
-  FRegistry.AddOrSetValue(T, lDictionary);
+  sb := TStringBuilder.Create;
+  try
+    for idx := 0 to FWarnings.Count-1 do
+    begin
+      sep := IFThen(idx=0,'',',');
+      sb.AppendFormat(sep+'{"kind":"%s", "source":"%s"}',
+        [FWarnings[idx].Kind.ToString, FWarnings[idx].Source]);
+    end;
+  finally
+    sb.Free;
+  end;
 end;
 
-{ TValidationResult }
+{ TWarningKindHelper }
 
-procedure TValidationResult.AddBrokenRules(aBrokenRules: TBrokenRules);
+function TWarningKindHelper.ToString: string;
 begin
-  FBrokenRules := FBrokenRules + aBrokenRules;
-end;
-
-function TValidationResult.GetBrokenRules: TBrokenRules;
-begin
-  Result := FBrokenRules;
-end;
-
-function TValidationResult.IsValid(const aRaiseExceptionIfNot: boolean)
-  : boolean;
-begin
-  Result := Length(FBrokenRules) <= 0;
-  if (not Result) and (aRaiseExceptionIfNot) then
-    raise Exception.Create(FBrokenRules.asJsonArray.ToJSON);
-end;
-
-procedure TValidationResult.SetBrokenRules(aBrokenRules: TBrokenRules);
-begin
-  FBrokenRules := aBrokenRules;
+  Result := TRttiEnumerationType.GetName(Self);
 end;
 
 end.

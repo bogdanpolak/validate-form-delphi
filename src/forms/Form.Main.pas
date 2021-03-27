@@ -72,15 +72,32 @@ begin
   EditRetypePassword.PasswordChar := ch;
 end;
 
-function AddBullets(const aLines: array of string): string;
+function GenerateTextWarnings(const aWarnings: IWarnings): string;
 var
   sl: TStringList;
   idx: Integer;
+  lWarnings: TArray<TWarning>;
+  lKind: TWarningKind;
+  msg: string;
+  lSource: string;
 begin
   sl := TStringList.Create();
   try
-    for idx := 0 to High(aLines) do
-      sl.Add(' * '+aLines[idx]);
+    lWarnings := aWarnings.ToArray;
+    for idx := 0 to High(lWarnings) do
+    begin
+      lKind := lWarnings[idx].Kind;
+      case lKind of
+        wkRequired: msg := '%s is requied';
+        wkMaxLength: msg := '%s has too many characters';
+        wkMinLength: msg := '%s has too less characters';
+        wkRegexMatch: msg := '%s has invalid format';
+        wkEmail: msg := '%s is not an email';
+        else msg := '!!! unknown warning kind';
+      end;
+      lSource := lWarnings[idx].Source;
+      sl.Add(Format(' * '+msg,[lSource]));
+    end;
     Result := sl.Text;
   finally
     sl.Free;
@@ -99,13 +116,13 @@ end;
 procedure TAppForm.btnUserValidationClick(Sender: TObject);
 var
   lUser: TUser;
-  lValidationResult: IValidationResult;
+  lWarnings: IWarnings;
 begin
   lUser := BuildUser(self);
   try
-    lValidationResult := TValidationEngine.PropertyValidation(lUser, 'AttributesValidation');
-    if not lValidationResult.IsValid then
-      MemoValidation.Lines.Text := AddBullets(lValidationResult.BrokenRules)
+    lWarnings := TValidationEngine.Validate<TUser>(lUser, 'ctx1');
+    if lWarnings.HasAny() then
+      MemoValidation.Lines.Text := GenerateTextWarnings(lWarnings)
     else
       MemoValidation.Lines.Text :=  '';
   finally

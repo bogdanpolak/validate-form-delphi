@@ -4,58 +4,67 @@ unit Validators.Attributes;
 interface
 
 uses
-  Validators.Engine, System.Generics.Collections;
-
-const
-  EmailRegex
-    : string =
-    '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$';
-    //'/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/';
+  Validators.Engine,
+  System.Generics.Collections;
 
 type
 
-  ValidationAttribute = class abstract(TCustomAttribute)
+  RuleBaseAttribute = class abstract(TCustomAttribute)
   protected
-    FMessage: string;
     FContext: string;
-    function DoValidate(aValue: string): boolean; virtual; abstract;
+    function DoValidate(aValue: string; out lWarningKind: TWarningKind)
+      : boolean; virtual; abstract;
   public
-    constructor Create(aContext: string; aMessage: string);
+    constructor Create(aContext: string);
     property Context: string read FContext;
-    function Validate(aValue: string): IValidationResult;
+    function TryValidate(const aValue: string; const aSource: string;
+      out aWarning: TWarning): boolean;
   end;
 
-  RequiredValidationAttribute = class(ValidationAttribute)
+  rule_RequiredAttribute = class(RuleBaseAttribute)
   public
-    function DoValidate(aValue: string): boolean; override;
+    function DoValidate(aValue: string; out aWarningKind: TWarningKind)
+      : boolean; override;
   end;
 
-  MaxLengthValidationAttribute = class(ValidationAttribute)
+  LengthValidationAttribute = class abstract(RuleBaseAttribute)
   protected
     FLength: Integer;
   public
-    constructor Create(aContext: string; aMessage: string; aLength: Integer);
-    function DoValidate(aValue: string): boolean; override;
+    constructor Create(aContext: string; aLength: Integer);
   end;
 
-  MinLengthValidationAttribute = class(MaxLengthValidationAttribute)
+  rule_MaxLengthAttribute = class(LengthValidationAttribute)
   public
-    function DoValidate(aValue: string): boolean; override;
+    function DoValidate(aValue: string; out aWarningKind: TWarningKind)
+      : boolean; override;
   end;
 
-  RegexValidationAttribute = class(ValidationAttribute)
+  rule_MinLengthAttribute = class(LengthValidationAttribute)
+  public
+    function DoValidate(aValue: string; out aWarningKind: TWarningKind)
+      : boolean; override;
+  end;
+
+  rule_RegexAttribute = class(RuleBaseAttribute)
   private
     FRegex: string;
   public
-    constructor Create(aContext: string; aMessage: string; aRegex: string);
-    function DoValidate(aValue: string): boolean; override;
+    constructor Create(aContext: string; aRegex: string);
+    function DoValidate(aValue: string; out aWarningKind: TWarningKind)
+      : boolean; override;
   end;
 
-  EmailValidationAttribute = class(RegexValidationAttribute)
-    constructor Create(aContext: string; aMessage: string);
+  rule_EmailAttribute = class(RuleBaseAttribute)
+  private const
+    EmailRegex = '^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$';
+    // '/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/';
+  public
+    function DoValidate(aValue: string; out aWarningKind: TWarningKind)
+      : boolean; override;
   end;
 
-  EntityValidationAttribute = class(ValidationAttribute)
+  EntityValidationAttribute = class(RuleBaseAttribute)
   end;
 
 implementation
@@ -65,70 +74,81 @@ uses
 
 { RequiredValidationAttribute }
 
-function RequiredValidationAttribute.DoValidate(aValue: string): boolean;
+function rule_RequiredAttribute.DoValidate(aValue: string;
+  out aWarningKind: TWarningKind): boolean;
 begin
+  aWarningKind := wkRequired;
   Result := not aValue.IsEmpty;
+end;
+
+{ LengthValidationAttribute }
+
+constructor LengthValidationAttribute.Create(aContext: string;
+  aLength: Integer);
+begin
+  inherited Create(aContext);
+  FLength := aLength;
 end;
 
 { MaxLengthValidationAttribute }
 
-constructor MaxLengthValidationAttribute.Create(aContext: string;
-  aMessage: string; aLength: Integer);
+function rule_MaxLengthAttribute.DoValidate(aValue: string;
+  out aWarningKind: TWarningKind): boolean;
 begin
-  inherited Create(aContext, aMessage);
-  FLength := aLength;
+  aWarningKind := wkMaxLength;
+  Result := Length(aValue) <= FLength;
 end;
 
-function MaxLengthValidationAttribute.DoValidate(aValue: string): boolean;
+{ MinLengthValidationAttribute }
+
+function rule_MinLengthAttribute.DoValidate(aValue: string;
+  out aWarningKind: TWarningKind): boolean;
 begin
-  Result := Length(aValue) <= FLength;
+  aWarningKind := wkMinLength;
+  Result := Length(aValue) >= FLength;
 end;
 
 { RegexValidationAttribute }
 
-constructor RegexValidationAttribute.Create(aContext: string; aMessage: string;
-  aRegex: string);
+constructor rule_RegexAttribute.Create(aContext: string; aRegex: string);
 begin
-  inherited Create(aContext, aMessage);
+  inherited Create(aContext);
   FRegex := aRegex;
 end;
 
-function RegexValidationAttribute.DoValidate(aValue: string): boolean;
+function rule_RegexAttribute.DoValidate(aValue: string;
+  out aWarningKind: TWarningKind): boolean;
 begin
+  aWarningKind := wkRegexMatch;
   Result := TRegEx.IsMatch(aValue, FRegex);
 end;
 
 { ValidationAttribute }
 
-constructor ValidationAttribute.Create(aContext: string; aMessage: string);
+constructor RuleBaseAttribute.Create(aContext: string);
 begin
   inherited Create;
-  FMessage := aMessage;
   FContext := aContext;
 end;
 
-function ValidationAttribute.Validate(aValue: string): IValidationResult;
+function RuleBaseAttribute.TryValidate(const aValue: string; const aSource: string;
+  out aWarning: TWarning): boolean;
 var
   lIsValid: boolean;
+  lWarningKind: TWarningKind;
 begin
-  Result := TValidationResult.Create;
-  lIsValid := DoValidate(aValue);
-  if (not lIsValid) then
-    Result.AddBrokenRules([FMessage]);
-end;
-
-{ MinLengthValidationAttribute }
-
-function MinLengthValidationAttribute.DoValidate(aValue: string): boolean;
-begin
-  Result := Length(aValue) >= FLength;
+  Result := DoValidate(aValue, lWarningKind);
+  if (not Result) then
+    aWarning := TWarning.Create(lWarningKind, aSource);
 end;
 
 { EmailValidationAttribute }
 
-constructor EmailValidationAttribute.Create(aContext, aMessage: string);
+function rule_EmailAttribute.DoValidate(aValue: string;
+  out aWarningKind: TWarningKind): boolean;
 begin
-  inherited Create(aContext, aMessage, EmailRegex);
+  aWarningKind := wkEmail;
+  Result := TRegEx.IsMatch(aValue, EmailRegex);
 end;
 
 end.
