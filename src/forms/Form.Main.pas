@@ -1,60 +1,68 @@
-//Created by DCE-Systems [https://github.com/dce-systems]
-
 unit Form.Main;
 
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages,
+  Winapi.Windows,
+  Winapi.Messages,
   System.SysUtils,
   System.StrUtils,
   System.Variants,
   System.Classes,
   System.Generics.Collections,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Forms,
+  Vcl.Dialogs,
+  Vcl.StdCtrls,
+  Vcl.ExtCtrls,
   {-}
-  Model.User;
+  Model.User,
+  Binding.Attributes;
 
 type
-  TAppForm = class(TForm)
+  TMainForm = class(TForm)
+    [BindWith('TUser.Firstname')]
     EditFirstname: TEdit;
-    LabelFirstname: TLabel;
+    [BindWith('TUser.Lastname')]
     EditLastname: TEdit;
-    LabelLastname: TLabel;
+    [BindWith('TUser.Email')]
     EditEmail: TEdit;
-    LabelEmail: TLabel;
+    [BindWith('TUser.Password')]
     EditPassword: TEdit;
+    EditRetypePassword: TEdit;
+    LabelFirstname: TLabel;
+    LabelLastname: TLabel;
+    LabelEmail: TLabel;
     LabelPwd: TLabel;
+    Label1: TLabel;
     GroupBox1: TGroupBox;
     GroupBox2: TGroupBox;
     btnUserValidation: TButton;
     Bevel1: TBevel;
     btnPopulateForm: TButton;
-    Label1: TLabel;
-    EditRetypePassword: TEdit;
     MemoValidation: TMemo;
     chkHidePassword: TCheckBox;
     procedure btnUserValidationClick(Sender: TObject);
     procedure btnPopulateFormClick(Sender: TObject);
     procedure chkHidePasswordClick(Sender: TObject);
   private
-    class function BuildUser(const appForm: TAppForm): TUser; static;
+    class function BuildUser(const appForm: TMainForm): TUser; static;
   public
   end;
 
 var
-  AppForm: TAppForm;
+  MainForm: TMainForm;
 
 implementation
 
 uses
-  Validators.Attributes,
-  Validators.Engine;
+  Validation.Core;
 
 
 {$R *.dfm}
 
-class function TAppForm.BuildUser(const appForm: TAppForm): TUser;
+class function TMainForm.BuildUser(const appForm: TMainForm): TUser;
 begin
   Result := TUser.Create(
     appForm.EditFirstname.Text,
@@ -63,7 +71,7 @@ begin
     appForm.EditPassword.Text);
 end;
 
-procedure TAppForm.chkHidePasswordClick(Sender: TObject);
+procedure TMainForm.chkHidePasswordClick(Sender: TObject);
 var
   ch: char;
 begin
@@ -72,22 +80,39 @@ begin
   EditRetypePassword.PasswordChar := ch;
 end;
 
-function AddBullets(const aLines: array of string): string;
+function GenerateTextWarnings(const aWarnings: IWarnings): string;
 var
   sl: TStringList;
   idx: Integer;
+  lWarnings: TArray<TWarning>;
+  lKind: TWarningKind;
+  msg: string;
+  lSource: string;
 begin
   sl := TStringList.Create();
   try
-    for idx := 0 to High(aLines) do
-      sl.Add(' * '+aLines[idx]);
+    lWarnings := aWarnings.ToArray;
+    for idx := 0 to High(lWarnings) do
+    begin
+      lKind := lWarnings[idx].Kind;
+      case lKind of
+        wkRequired: msg := '%s is requied';
+        wkMaxLength: msg := '%s has too many characters';
+        wkMinLength: msg := '%s has too less characters';
+        wkRegexMatch: msg := '%s has invalid format';
+        wkEmail: msg := '%s is not an email';
+        else msg := '!!! unknown warning kind';
+      end;
+      lSource := lWarnings[idx].Source;
+      sl.Add(Format(' * '+msg,[lSource]));
+    end;
     Result := sl.Text;
   finally
     sl.Free;
   end;
 end;
 
-procedure TAppForm.btnPopulateFormClick(Sender: TObject);
+procedure TMainForm.btnPopulateFormClick(Sender: TObject);
 begin
   EditFirstname.Text := 'John';
   EditLastname.Text := 'Kowalski';
@@ -96,16 +121,16 @@ begin
   EditRetypePassword.Text := 'John*123';
 end;
 
-procedure TAppForm.btnUserValidationClick(Sender: TObject);
+procedure TMainForm.btnUserValidationClick(Sender: TObject);
 var
   lUser: TUser;
-  lValidationResult: IValidationResult;
+  lWarnings: IWarnings;
 begin
   lUser := BuildUser(self);
   try
-    lValidationResult := TValidationEngine.PropertyValidation(lUser, 'AttributesValidation');
-    if not lValidationResult.IsValid then
-      MemoValidation.Lines.Text := AddBullets(lValidationResult.BrokenRules)
+    lWarnings := TValidator.Properties.Execute(lUser);
+    if lWarnings.HasAny() then
+      MemoValidation.Lines.Text := GenerateTextWarnings(lWarnings)
     else
       MemoValidation.Lines.Text :=  '';
   finally
