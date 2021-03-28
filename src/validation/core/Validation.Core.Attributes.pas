@@ -1,11 +1,9 @@
-unit Validators.Attributes;
-// created by Daniele Spinetti: [https://github.com/bittimeprofessionals]
+unit Validation.Core.Attributes;
 
 interface
 
 uses
-  Validators.Engine,
-  System.Generics.Collections;
+  Validation.Core;
 
 type
 
@@ -72,16 +70,12 @@ implementation
 uses
   System.SysUtils, System.RegularExpressions;
 
-{ RequiredValidationAttribute }
-
 function rule_RequiredAttribute.DoValidate(aValue: string;
   out aWarningKind: TWarningKind): boolean;
 begin
   aWarningKind := wkRequired;
   Result := not aValue.IsEmpty;
 end;
-
-{ LengthValidationAttribute }
 
 constructor LengthValidationAttribute.Create(aContext: string;
   aLength: Integer);
@@ -90,8 +84,6 @@ begin
   FLength := aLength;
 end;
 
-{ MaxLengthValidationAttribute }
-
 function rule_MaxLengthAttribute.DoValidate(aValue: string;
   out aWarningKind: TWarningKind): boolean;
 begin
@@ -99,16 +91,12 @@ begin
   Result := Length(aValue) <= FLength;
 end;
 
-{ MinLengthValidationAttribute }
-
 function rule_MinLengthAttribute.DoValidate(aValue: string;
   out aWarningKind: TWarningKind): boolean;
 begin
   aWarningKind := wkMinLength;
   Result := Length(aValue) >= FLength;
 end;
-
-{ RegexValidationAttribute }
 
 constructor rule_RegexAttribute.Create(aContext: string; aRegex: string);
 begin
@@ -122,8 +110,6 @@ begin
   aWarningKind := wkRegexMatch;
   Result := TRegEx.IsMatch(aValue, FRegex);
 end;
-
-{ ValidationAttribute }
 
 constructor RuleBaseAttribute.Create(aContext: string);
 begin
@@ -141,8 +127,6 @@ begin
   if (not Result) then
     aWarning := TWarning.Create(lWarningKind, aSource);
 end;
-
-{ EmailValidationAttribute }
 
 function rule_EmailAttribute.DoValidate(aValue: string;
   out aWarningKind: TWarningKind): boolean;

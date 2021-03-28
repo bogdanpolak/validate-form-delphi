@@ -3,13 +3,19 @@ unit Form.Main;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages,
+  Winapi.Windows,
+  Winapi.Messages,
   System.SysUtils,
   System.StrUtils,
   System.Variants,
   System.Classes,
   System.Generics.Collections,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls,
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Forms,
+  Vcl.Dialogs,
+  Vcl.StdCtrls,
+  Vcl.ExtCtrls,
   {-}
   Model.User;
 
@@ -50,8 +56,7 @@ var
 implementation
 
 uses
-  Validators.Attributes,
-  Validators.Engine;
+  Validation.Core;
 
 
 {$R *.dfm}
@@ -122,7 +127,7 @@ var
 begin
   lUser := BuildUser(self);
   try
-    lWarnings := TValidationEngine.Validate<TUser>(lUser);
+    lWarnings := TValidator.Properties.Execute(lUser);
     if lWarnings.HasAny() then
       MemoValidation.Lines.Text := GenerateTextWarnings(lWarnings)
     else

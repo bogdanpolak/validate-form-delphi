@@ -4,8 +4,9 @@ uses
   Vcl.Forms,
   Form.Main in 'forms\Form.Main.pas' {MainForm},
   Model.User in 'model\Model.User.pas',
-  Validators.Attributes in 'validators\core\Validators.Attributes.pas',
-  Validators.Engine in 'validators\core\Validators.Engine.pas';
+  Validation.Core.Attributes in 'validation\core\Validation.Core.Attributes.pas',
+  Validation.Core in 'validation\core\Validation.Core.pas',
+  Validation.Core.Engine in 'validation\core\Validation.Core.Engine.pas';
 
 {$R *.res}
 

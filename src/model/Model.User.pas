@@ -4,8 +4,7 @@ interface
 
 uses
   System.SysUtils,
-  Validators.Attributes,
-  Validators.Engine;
+  Validation.Core.Attributes;
 
 type
   TUser = class
