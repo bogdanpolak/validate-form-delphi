@@ -1,5 +1,3 @@
-//Created by DCE-Systems [https://github.com/dce-systems]
-
 unit Form.Main;
 
 interface
@@ -16,34 +14,38 @@ uses
   Model.User;
 
 type
-  TAppForm = class(TForm)
+  TMainForm = class(TForm)
+    [BindWith('TUser.Firstname')]
     EditFirstname: TEdit;
-    LabelFirstname: TLabel;
+    [BindWith('TUser.Lastname')]
     EditLastname: TEdit;
-    LabelLastname: TLabel;
+    [BindWith('TUser.Email')]
     EditEmail: TEdit;
-    LabelEmail: TLabel;
+    [BindWith('TUser.Password')]
     EditPassword: TEdit;
+    EditRetypePassword: TEdit;
+    LabelFirstname: TLabel;
+    LabelLastname: TLabel;
+    LabelEmail: TLabel;
     LabelPwd: TLabel;
+    Label1: TLabel;
     GroupBox1: TGroupBox;
     GroupBox2: TGroupBox;
     btnUserValidation: TButton;
     Bevel1: TBevel;
     btnPopulateForm: TButton;
-    Label1: TLabel;
-    EditRetypePassword: TEdit;
     MemoValidation: TMemo;
     chkHidePassword: TCheckBox;
     procedure btnUserValidationClick(Sender: TObject);
     procedure btnPopulateFormClick(Sender: TObject);
     procedure chkHidePasswordClick(Sender: TObject);
   private
-    class function BuildUser(const appForm: TAppForm): TUser; static;
+    class function BuildUser(const appForm: TMainForm): TUser; static;
   public
   end;
 
 var
-  AppForm: TAppForm;
+  MainForm: TMainForm;
 
 implementation
 
@@ -54,7 +56,7 @@ uses
 
 {$R *.dfm}
 
-class function TAppForm.BuildUser(const appForm: TAppForm): TUser;
+class function TMainForm.BuildUser(const appForm: TMainForm): TUser;
 begin
   Result := TUser.Create(
     appForm.EditFirstname.Text,
@@ -63,7 +65,7 @@ begin
     appForm.EditPassword.Text);
 end;
 
-procedure TAppForm.chkHidePasswordClick(Sender: TObject);
+procedure TMainForm.chkHidePasswordClick(Sender: TObject);
 var
   ch: char;
 begin
@@ -104,7 +106,7 @@ begin
   end;
 end;
 
-procedure TAppForm.btnPopulateFormClick(Sender: TObject);
+procedure TMainForm.btnPopulateFormClick(Sender: TObject);
 begin
   EditFirstname.Text := 'John';
   EditLastname.Text := 'Kowalski';
@@ -113,14 +115,14 @@ begin
   EditRetypePassword.Text := 'John*123';
 end;
 
-procedure TAppForm.btnUserValidationClick(Sender: TObject);
+procedure TMainForm.btnUserValidationClick(Sender: TObject);
 var
   lUser: TUser;
   lWarnings: IWarnings;
 begin
   lUser := BuildUser(self);
   try
-    lWarnings := TValidationEngine.Validate<TUser>(lUser, 'ctx1');
+    lWarnings := TValidationEngine.Validate<TUser>(lUser);
     if lWarnings.HasAny() then
       MemoValidation.Lines.Text := GenerateTextWarnings(lWarnings)
     else

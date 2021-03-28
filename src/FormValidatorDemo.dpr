@@ -2,7 +2,7 @@ program FormValidatorDemo;
 
 uses
   Vcl.Forms,
-  Form.Main in 'forms\Form.Main.pas' {AppForm},
+  Form.Main in 'forms\Form.Main.pas' {MainForm},
   Model.User in 'model\Model.User.pas',
   Validators.Attributes in 'validators\core\Validators.Attributes.pas',
   Validators.Engine in 'validators\core\Validators.Engine.pas';
@@ -12,6 +12,6 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  Application.CreateForm(TAppForm, AppForm);
+  Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.

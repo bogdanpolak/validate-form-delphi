@@ -1,5 +1,4 @@
 unit Validators.Engine;
-// created by Daniele Spinetti: [https://github.com/bittimeprofessionals]
 
 interface
 
@@ -42,7 +41,6 @@ type
   private
     function IsAllValid(const aRaiseExceptionIfNot: boolean): boolean;
   public
-    class function New: IWarnings; static;
     constructor Create();
     destructor Destroy; override;
     function ToArray: TArray<TWarning>;
@@ -54,16 +52,18 @@ type
   end;
 
   TValidationEngine = class(TObject)
+  private const
+    ValidateMethodName = 'TryValidate';
   private
     class var FRTTIContext: TRttiContext;
-    class procedure DoEntityValidation<T>(aObject: T; aContext: string;
-      oWarnings: IWarnings);
-    class procedure DoPropertyValidation(aObject: TObject; aContext: string;
+    procedure DoPropertyValidation(aObject: TObject; aProperty: TRttiProperty;
       aWarnings: IWarnings);
+    function FindValidateMethod(aCustomAttribute: TCustomAttribute)
+      : TRttiMethod;
   public
     class constructor Create;
     class destructor Destroy;
-    class function Validate<T: class>(aObject: T; aContext: string): IWarnings;
+    class function Validate<T: class>(aObject: T): IWarnings;
   end;
 
 implementation
@@ -84,62 +84,66 @@ begin
   FRTTIContext.Free;
 end;
 
-class procedure TValidationEngine.DoEntityValidation<T>(aObject: T;
-  aContext: string; oWarnings: IWarnings);
-begin
-  {
-    var
-    a: TCustomAttribute;
-    lValidator: IValidator<T>;
-    Result := TValidationResult.Create;
-    lValidator := FValidationContainer.GetValidatorFor<T>(aContext);
-    Result.AddWarning(lValidator.Validate(aObject).BrokenRules);
-  }
-end;
-
-class procedure TValidationEngine.DoPropertyValidation(aObject: TObject;
-  aContext: string; aWarnings: IWarnings);
+procedure TValidationEngine.DoPropertyValidation(aObject: TObject;
+  aProperty: TRttiProperty; aWarnings: IWarnings);
 var
-  rt: TRttiType;
-  a: TCustomAttribute;
-  p: TRttiProperty;
-  m: TRttiMethod;
-  lWarning: TWarning;
-  lValue: string;
+  attr: TCustomAttribute;
+  lValidateMethod: TRttiMethod;
   lSource: string;
+  lPropertyValue: string;
+  oWarning: TWarning;
+  lWarningValue: TValue;
   lResult: TValue;
-  isValid: Boolean;
-  lKindValue: TValue;
+  lIsValid: boolean;
 begin
-  rt := FRTTIContext.GetType(aObject.ClassType);
-  for p in rt.GetProperties do
-    for a in p.GetAttributes do
+  for attr in aProperty.GetAttributes do
+  begin
+    lValidateMethod := FindValidateMethod(attr);
+    if lValidateMethod <> nil then
     begin
-      if not(a is RuleBaseAttribute) then
-        continue;
-      if RuleBaseAttribute(a).Context <> aContext then
-        continue;
-      m := FRTTIContext.GetType(a.ClassType).GetMethod('TryValidate');
-      if m = nil then
-        continue;
-      lValue := p.GetValue(aObject).AsString;
-      lSource := Format('%s.%s', [aObject.ClassName, p.Name]);
-      lKindValue := TValue.From(lWarning);
-      isValid := m.Invoke(a, [lValue, lSource, lKindValue]).AsType<boolean>();
-      if not isValid then
+      lPropertyValue := aProperty.GetValue(aObject).AsString;
+      lSource := Format('%s.%s', [aObject.ClassName, aProperty.Name]);
+      lWarningValue := TValue.From(oWarning);
+      // Call Rtti Method
+      lResult := lValidateMethod.Invoke(attr, [lPropertyValue, lSource,
+        lWarningValue]);
+      lIsValid := lResult.AsType<boolean>;
+      if not lIsValid then
       begin
-        lWarning := lKindValue.AsType<TWarning>;
-        aWarnings.Add(lWarning);
+        oWarning := lWarningValue.AsType<TWarning>;
+        aWarnings.Add(oWarning);
       end;
     end;
+  end;
 end;
 
-class function TValidationEngine.Validate<T>(aObject: T; aContext: string)
-  : IWarnings;
+function TValidationEngine.FindValidateMethod(aCustomAttribute
+  : TCustomAttribute): TRttiMethod;
 begin
-  Result := TWarnings.New;
-  DoEntityValidation<T>(aObject, aContext, Result);
-  DoPropertyValidation(aObject, aContext, Result);
+  if aCustomAttribute is RuleBaseAttribute then
+    Result := FRTTIContext.GetType(aCustomAttribute.ClassType)
+      .GetMethod(ValidateMethodName)
+  else
+    Result := nil
+end;
+
+class function TValidationEngine.Validate<T>(aObject: T): IWarnings;
+var
+  lWarnings: IWarnings;
+  lValidationEngine: TValidationEngine;
+  lRttiType: TRttiType;
+  lRttiProperty: TRttiProperty;
+begin
+  lWarnings := TWarnings.Create;
+  lValidationEngine := TValidationEngine.Create;
+  try
+    lRttiType := FRTTIContext.GetType(aObject.ClassType);
+    for lRttiProperty in lRttiType.GetProperties do
+      lValidationEngine.DoPropertyValidation(aObject, lRttiProperty, lWarnings);
+    Result := lWarnings;
+  finally
+    lValidationEngine.Free;
+  end;
 end;
 
 { TWarning }
@@ -190,11 +194,6 @@ begin
   Result := FWarnings.Count > 0;
 end;
 
-class function TWarnings.New: IWarnings;
-begin
-  Result := TWarnings.Create;
-end;
-
 function TWarnings.ToArray: TArray<TWarning>;
 begin
   Result := FWarnings.ToArray;
@@ -209,10 +208,10 @@ var
 begin
   sb := TStringBuilder.Create;
   try
-    for idx := 0 to FWarnings.Count-1 do
+    for idx := 0 to FWarnings.Count - 1 do
     begin
-      sep := IFThen(idx=0,'',',');
-      sb.AppendFormat(sep+'{"kind":"%s", "source":"%s"}',
+      sep := IFThen(idx = 0, '', ',');
+      sb.AppendFormat(sep + '{"kind":"%s", "source":"%s"}',
         [FWarnings[idx].Kind.ToString, FWarnings[idx].Source]);
     end;
   finally
