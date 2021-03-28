@@ -4,10 +4,7 @@ interface
 
 uses
   System.RTTI,
-  System.JSON,
   System.SysUtils,
-  System.StrUtils,
-  System.Generics.Collections,
   Validation.Core;
 
 type

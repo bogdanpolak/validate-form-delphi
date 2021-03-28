@@ -120,7 +120,6 @@ end;
 function RuleBaseAttribute.TryValidate(const aValue: string; const aSource: string;
   out aWarning: TWarning): boolean;
 var
-  lIsValid: boolean;
   lWarningKind: TWarningKind;
 begin
   Result := DoValidate(aValue, lWarningKind);

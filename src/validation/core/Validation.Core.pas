@@ -33,14 +33,13 @@ type
     procedure Clear;
     procedure Add(const aWarning: TWarning); overload;
     procedure Add(const aWarnings: TArray<TWarning>); overload;
+    function IsAllValid(const aRaiseExceptionIfNot: boolean): boolean;
     function HasAny: boolean;
   end;
 
   TWarnings = class(TInterfacedObject, IWarnings)
   strict private
     FWarnings: TList<TWarning>;
-  private
-    function IsAllValid(const aRaiseExceptionIfNot: boolean): boolean;
   public
     constructor Create();
     destructor Destroy; override;
@@ -49,6 +48,7 @@ type
     procedure Clear;
     procedure Add(const aWarning: TWarning); overload;
     procedure Add(const aWarnings: TArray<TWarning>); overload;
+    function IsAllValid(const aRaiseExceptionIfNot: boolean): boolean;
     function HasAny: boolean;
   end;
 
@@ -120,7 +120,6 @@ end;
 function TWarnings.ToJSON: string;
 var
   sb: TStringBuilder;
-  lWarning: TWarning;
   idx: Integer;
   sep: string;
 begin

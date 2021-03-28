@@ -17,7 +17,8 @@ uses
   Vcl.StdCtrls,
   Vcl.ExtCtrls,
   {-}
-  Model.User;
+  Model.User,
+  Binding.Attributes;
 
 type
   TMainForm = class(TForm)
